@@ -1,6 +1,239 @@
 import os
 
-configfile: "config.yaml"
+configfile:"config_gsea.yaml"
 
 if os.path.exists("Snakefile_versioned.sk"):
     include "Snakefile_versioned.sk"
+
+
+
+################
+#
+# Global Params
+#
+
+REFERENCE_ROOT=os.environ.get("REFERENCE_ROOT")
+BIOINFO_REFERENCE_ROOT=REFERENCE_ROOT + "bioinfotree/task/"
+
+CONDA_ACTIVATE="set +u; source %sminiconda2/etc/profile.d/conda.sh ; conda activate ; conda activate" % REFERENCE_ROOT
+
+MSIGDB_VERSION=config["MSIGDB_VERSION"]
+MSIGDB_DIR=BIOINFO_REFERENCE_ROOT+"msigdb/dataset/"+MSIGDB_VERSION
+
+DGE_TOOL=config["DGE_TOOL"]
+CONTRASTS=config["LIMMA_CONTRASTS_NAMES"]
+RNK_METRIC=config["RNK_METRIC"]
+GMT=config["MSIGDB_TYPES"]
+
+GSEA_DIR=os.environ.get("PWD")
+GSEA_PUBLISH_USER=config["GSEA_PUBLISH_USER"]
+GSEA_PUBLISH_HOST=config["GSEA_PUBLISH_HOST"]
+
+
+
+##############
+#
+# ALL targets
+#
+
+rule all:
+	input:
+		"multi_GSEA.link.header_added.gz",
+		"multi_GSEA.link.header_added.xlsx",
+		"multi_GSEA.html",
+		"gsea_publish_done"
+
+
+
+################
+#
+# Generic rules
+#
+
+rule header_added_gz:
+	input:
+		"{file}.gz"
+	output:
+		"{file}.header_added.gz"
+	shell:"""
+		(bawk -M {input} | cut -f 2 | transpose; zcat {input} ) | gzip > {output}
+	"""
+
+rule tab_to_xlsx:
+	input:
+		"{file}.gz"
+	output:
+		"{file}.xlsx"
+	shell: """
+		zcat {input} | tab2xlsx > {output}
+	"""
+
+
+
+######################
+#
+# GESA specific rules
+#
+
+rule create_gmt:
+	input:
+		MSIGDB_DIR+"/{gene_set}."+MSIGDB_VERSION+".symbols.gmt.gz"
+	output:
+		"{gene_set}.gmt"
+	shell:"""
+		gunzip < {input} > {output}
+	"""
+
+rule logFC_rnk:
+	input:
+		"../"+DGE_TOOL+".toptable_clean.contrast_{contrast}.gz"
+	output:
+		DGE_TOOL+"{contrast}.logFC.rnk"
+	shell: """
+		bawk '$Pvalue_adj!="NA" {{print $GeneID, $logFC}}' {input} | bsort -k2,2g > {output}
+	"""
+
+rule logFC_pval_rnk:
+	input:
+		"../"+DGE_TOOL+".toptable_clean.contrast_{contrast}.gz"
+	output:
+		DGE_TOOL+".{contrast}.logFC_pval.rnk"
+	shell: """
+		bawk '$Pvalue_adj!="NA" {{print $GeneID, $logFC*(-log($Pvalue)/log(10))}}' {input} | bsort -k2,2g > {output}
+	"""
+
+"""
+.META: *.rnk
+	1	GeneID
+	2	value
+
+"""
+
+rule run_fgsea:
+	input:
+		gmt_file="{gmt_file}.gmt",
+		rnk_file="{dgetool}.{contrast}.{rnk_metric}.rnk"
+		#rnk_file="{rnk_file}.rnk"
+	output:
+		"fGSEA_Results/{dgetool}.{contrast}.{rnk_metric}.rnk.{gmt_file}.fGSEA.tab"
+	shell: """
+		{CONDA_ACTIVATE} rstudio_Rv4.0.3; export LD_LIBRARY_PATH=/sto1/ref/miniconda2/envs/rstudio_Rv4.0.3/jre/lib/amd64/server; \
+		Rscript ../../../../local/bin/fgsea.CommandLine.R \
+			-g {wildcards.gmt_file} \
+			-r {wildcards.dgetool}.{wildcards.contrast}.{wildcards.rnk_metric} \
+			-n 1000 \
+			-b {config[MAX_GENES_IN_SET]} \
+			-s {config[MIN_GENES_IN_SET]} \
+			-d fGSEA_Results \
+			-l Leading_Edge \
+			--gseaParam {config[GSEA_WEIGHT]}
+	"""
+
+
+rule multi_fGSEA:
+	input:
+		expand("fGSEA_Results/{dgetool}.{contrast}.{rnk_metric}.rnk.{gmt}.fGSEA.tab"
+			, dgetool=DGE_TOOL, contrast=CONTRASTS, rnk_metric=RNK_METRIC, gmt=GMT)
+	output:
+		"multi_GSEA.gz"
+	shell: """
+		matrix_reduce -t 'fGSEA_Results/*.rnk.*.fGSEA.tab' \
+		| tr ';' '\\t' | grep -v 'nMoreExtreme' | gzip > {output}
+	"""
+
+"""
+.META: multi_GSEA.gz
+	1	contrast
+	2	msigdb_type
+	3	pathway
+	4	pval
+	5	padj
+	6	ES
+	7	NES
+	8	nMoreExtreme
+	9	size
+
+"""
+
+rule mdsum_file:
+	input:
+		expand("{dgetool}.{contrast}.{rnk_metric}.rnk"
+			, dgetool=DGE_TOOL, contrast=CONTRASTS, rnk_metric=RNK_METRIC)
+	output:
+		"rnk_md5sum.txt"
+	shell: """
+		for i in $(ls *rnk); do \
+			touch -a {output}; \
+			a=$PWD'/'$i; \
+			b=$(md5sum $a | tr " " "\\t" | cut -f 1); \
+			echo | bawk -v b=$b -v i=$i '{{print "ln -s "i" ash_rnk-"b}}' >> {output}; \
+		done; \
+		cat {output} | sh
+	"""
+
+rule multi_fGSEA_link:
+	input:
+		gsea="multi_GSEA.gz",
+		ash_rnk="rnk_md5sum.txt"
+	output:
+		"multi_GSEA.link.gz"
+	shell: """
+		zcat multi_GSEA.gz \
+		| translate -a -r <(tr " " "\\t" < {input.ash_rnk} | cut -f3- | sed "s/.rnk//") 1  \
+		| bawk '{{HTTP="http://"; if(length($3)>100){{HTTP=""}} print $1~9, \
+			HTTP "molinerislab.shinyapps.io/shinysea/?rnk=" $10 "&geneset=" $2 "_" $3 "&gseaParam=" {config[GSEA_WEIGHT]}, \
+			HTTP "www.gsea-msigdb.org/gsea/msigdb/geneset_page.jsp?geneSetName=" $3}}' \
+		| gzip > {output}
+	"""
+
+"""
+.META: multi_GSEA.link.gz
+	1	contrast
+	2	msigdb_type
+	3	pathway
+	4	pval
+	5	padj
+	6	ES
+	7	NES
+	8	nMoreExtreme
+	9	size
+	10	shinySea_link
+	11	pathway_link
+
+"""
+
+rule fGSEA_Rmd_template:
+	input:
+		"../../../../local/src/fGSEA_Rmd_template.Rmd"
+	output:
+		"fGSEA_Rmd_template.Rmd"
+	shell: """
+		cp {input} {output}
+	"""
+
+rule multi_fGSEA_link_html:
+	input:
+		multi_GSEA="multi_GSEA.link.header_added.gz",
+		rmd="fGSEA_Rmd_template.Rmd"
+	output:
+		"multi_GSEA.html"
+	shell:"""
+		{CONDA_ACTIVATE} rstudio_Rv4.0.3; export LD_LIBRARY_PATH=/sto1/ref/miniconda2/envs/rstudio_Rv4.0.3/jre/lib/amd64/server; \
+		Rscript -e 'library(rmarkdown); rmarkdown::render("{input.rmd}", output_file="{output}", quiet=TRUE)'
+	"""
+
+rule publish:
+	input:
+		xlsx="multi_GSEA.link.header_added.xlsx",
+		html="multi_GSEA.html",
+		ash_rnk="rnk_md5sum.txt"
+	output:
+		"gsea_publish_done"
+	shell:"""
+		GSEA_PUBLISH_DIR=$(pwd | sed 's/\/sto1/\/var\/www\/html/'); \
+		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} mkdir -p $GSEA_PUBLISH_DIR; \
+		rsync -avP {input.xlsx} {input.html} *.rnk ash_rnk-* {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST}:$GSEA_PUBLISH_DIR; \
+		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} ln -s $GSEA_PUBLISH_DIR/ash_rnk-* /var/www/html/epigen/shinySea/hash; \
+		echo 'publish done' > {output}
+	"""
+
