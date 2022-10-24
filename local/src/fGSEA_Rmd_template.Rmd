@@ -1,0 +1,114 @@
+---
+title: "fast GSEA - fast Visualization"
+author: "Olilab"
+html_document: "fGSEA_Rmd_template.html"
+---
+
+## Analysis info
+
+```{r echo=FALSE,results = "asis", cache = FALSE}
+cat(getwd())
+```
+
+
+## Shared files
+
+```{r echo=FALSE,results = "asis", cache = FALSE}
+gsea_publish_dir <- gsub("/sto1", "", getwd())
+cat(paste0("http://olilab.unito.it", gsea_publish_dir, "/multi_GSEA.link.header_added.xlsx"))
+```
+
+https://molinerislab.shinyapps.io/shinysea/
+
+
+## Access MSigDb results {.tabset .tabset-pills}
+
+```{r echo = FALSE, cache = FALSE}
+barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN = 20){
+  
+  toplot <- as.data.frame(subset(fgseaRes, select= c("pathway", "msigdb_type", "NES")))
+  
+  if(!is.null(qTh))
+    toplot <- subset(toplot, fgseaRes$padj<qTh)
+  
+  if (!is.null(topPathways)) 
+    toplot <- subset(toplot, pathway %in% topPathways)
+  
+  toplot$direction <- factor(sign(toplot$NES))
+  
+  toplot$pathway <- gsub("_", " ", toplot$pathway)
+  #toplot$pathway <- gsub("MM |^GO|MF ", "", toplot$pathway)
+  #toplot$pathway <- gsub("(KEGG|REACTOME)", "\\1:", toplot$pathway)
+  
+  toplot <- rbind(top_n(toplot, topN/2, NES), top_n(toplot, -(topN/2), NES))
+  toplot$pathway <- factor(toplot$pathway, levels = toplot$pathway[order(toplot$NES)])
+  
+  title <- toplot$msigdb_type[1]
+  
+  ggplot(toplot, aes(x = pathway, y = NES, fill = direction)) + 
+    geom_col() + coord_flip() + ggtitle(title) + theme_bw() + my_theme + 
+    scale_fill_manual(values = c("#004C99", "#CC0000")) + theme(legend.position="none") 
+}
+```
+
+
+
+```{r echo = FALSE, results = "asis", cache = FALSE}
+suppressMessages(library(ggplot2))
+suppressMessages(library(dplyr))
+suppressMessages(suppressWarnings(library(RNAseqRtools)))
+suppressMessages(library(knitr))
+suppressMessages(library(DT))
+
+infile <- "multi_GSEA.link.header_added.gz"
+z <- read.delim(infile, header = T)
+z_list <- split(z, z$msigdb_type)
+
+render <- JS(
+  "function(data, type, row) {",
+  "  if(type === 'sort' && data === null) {",
+  "    return 2;",
+  "  }",
+  "  return data;",
+  "}"
+)
+
+suppressWarnings(
+  suppressMessages(
+    DT::datatable(z
+                  , filter = "top"
+                  , options = list(columnDefs = list(list(targets = 4:10
+                                                          , searchable = FALSE
+                                                          , render = render))
+                  )
+  )
+  )
+)
+
+
+contrasts <- levels(as.factor(z$contrast))
+
+template <- "\n
+
+### %s
+
+"
+
+lapply(z_list, function(x){
+  cat(sprintf(template, x$msigdb_type[1]))
+  for (cont in contrasts) {
+    cat(sprintf("#### Contrast: %s",cont))
+    x_cont <- subset(x,x$contrast==cont)
+    print(barplot_multi_fGSEA(x_cont))
+  }
+  #x <- x[order(x$pval),]
+  #DT::datatable(subset(x, select = -c(msigdb_type)))
+  #T::datatable(subset(x, select = -c(msigdb_type)),rownames = F)
+  #print(knitr::kable(subset(x, select = -c(msigdb_type)), row.names = F))
+  cat("\n")
+})
+
+```
+
+
+
