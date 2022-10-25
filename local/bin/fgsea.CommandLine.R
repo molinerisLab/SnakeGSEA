@@ -54,10 +54,10 @@ if(!opt$gseaParam %in% c(0,1))
   stop("gseaParam must be 0 or 1! Exit")
 
 # Download pathway file
-gmt <- read.gmt(paste0(opt$gmtfile,".gmt"))
+gmt <- read.gmt(paste0(opt$gmtfile))
 
 # Download rank file
-rnk <- read.table(paste0(opt$rnkfile,".rnk"), header = F, col.names = c("featureID", "value"))
+rnk <- read.table(opt$rnkfile, header = F, col.names = c("featureID", "value"))
 rnk_vector <- unlist(rnk$value)
 names(rnk_vector) <- rnk$featureID
 
@@ -66,7 +66,7 @@ if(!dir.exists(opt$directory)) dir.create(opt$directory, recursive = T, showWarn
 if(!dir.exists(opt$leadingedge)) dir.create(opt$leadingedge, recursive = T, showWarnings = FALSE)
 
 # Define output filename
-outfile <- paste0(opt$rnkfile, ".rnk.", opt$gmtfile, ".fGSEA")
+outfile <- paste0(opt$rnkfile, ".", opt$gmtfile, ".fGSEA")
 
 # Run fGSEA
 # Add condition: if(simple or multilevel)
