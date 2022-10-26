@@ -2,6 +2,8 @@ import os
 
 configfile:"config.yaml"
 
+#shell.suffix("; sleep 5")
+
 #if os.path.exists("Snakefile_versioned.sk"):
 #    include "Snakefile_versioned.sk"
 
@@ -121,7 +123,7 @@ rule run_fgsea:
 		gmt_file="{gmt_file}.gmt",
 		rnk_file="{rnk_file}.rnk"
 	output:
-		"fGSEA_Results/{rnk_file}.rnk.{gmt_file}.fGSEA.tab"
+		"fGSEA_Results/{rnk_file}.rnk.{gmt_file}.gmt.fGSEA.tab"
 	shell: """
 		{CONDA_ACTIVATE} rstudio_Rv4.0.3; export LD_LIBRARY_PATH=/sto1/ref/miniconda2/envs/rstudio_Rv4.0.3/jre/lib/amd64/server; \
 		Rscript ../../local/bin/fgsea.CommandLine.R \
@@ -138,7 +140,7 @@ rule run_fgsea:
 
 rule multi_fGSEA:
 	input:
-		expand("fGSEA_Results/{rnk_file}.rnk.{gmt}.fGSEA.tab"
+		expand("fGSEA_Results/{rnk_file}.rnk.{gmt}.gmt.fGSEA.tab"
 			, rnk_file=RNK_FILES, gmt=GMT)
 	output:
 		"multi_GSEA.gz"
