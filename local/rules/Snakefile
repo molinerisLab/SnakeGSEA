@@ -20,9 +20,10 @@ BIOINFO_REFERENCE_ROOT=REFERENCE_ROOT + "bioinfotree/task/"
 CONDA_ACTIVATE="set +u; source %sminiconda2/etc/profile.d/conda.sh ; conda activate ; conda activate" % REFERENCE_ROOT
 
 MSIGDB_VERSION=config["MSIGDB_VERSION"]
-MSIGDB_DIR=BIOINFO_REFERENCE_ROOT+"msigdb/dataset/"+MSIGDB_VERSION
+MSIGDB_DIR=BIOINFO_REFERENCE_ROOT+"/msigdb/dataset/"+MSIGDB_VERSION
 
-GMT=config["MSIGDB_TYPES"]
+GMT=config["MSIGDB_TYPES"][config["MSIGDB_VERSION"]]
+print(GMT)
 
 GSEA_DIR=os.environ.get("PWD")
 GSEA_PUBLISH_USER=config["GSEA_PUBLISH_USER"]
@@ -46,7 +47,7 @@ rule all:
 		"multi_GSEA.link.header_added.gz",
 		"multi_GSEA.link.header_added.xlsx",
 		"multi_GSEA.html",
-		"gsea_publish_done"
+#		"gsea_publish_done"
 
 
 
@@ -108,13 +109,24 @@ rule logFC_pval_rnk:
 # GESA specific rules
 #
 
-rule create_gmt:
+rule create_gmt_gz:
 	input:
 		MSIGDB_DIR+"/{gene_set}."+MSIGDB_VERSION+".symbols.gmt.gz"
 	output:
 		"{gene_set}.gmt"
 	shell:"""
 		gunzip < {input} > {output}
+	"""
+
+rule create_gmt:
+	input:
+		MSIGDB_DIR+"/{gene_set}."+MSIGDB_VERSION+".symbols.gmt"
+	output:
+		"{gene_set}.gmt"
+	wildcard_constraints:
+	        gene_set="[^\/]+"
+	shell:"""
+		ln -s {input} {output}
 	"""
 
 
@@ -238,10 +250,10 @@ rule publish:
 	output:
 		"gsea_publish_done"
 	shell:"""
-		GSEA_PUBLISH_DIR=$(pwd | sed 's/\/sto1/\/var\/www\/html/'); \
-		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} mkdir -p $GSEA_PUBLISH_DIR; \
-		rsync -avP {input.xlsx} {input.html} *.rnk ash_rnk-* {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST}:$GSEA_PUBLISH_DIR; \
-		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} ln -s $GSEA_PUBLISH_DIR/ash_rnk-* /var/www/html/epigen/shinySea/hash; \
+		GSEA_PUBLISH_DIR=$(pwd | sed 's/\/sto1/\/var\/www\/html/');
+		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} mkdir -p $GSEA_PUBLISH_DIR; 
+		rsync -avP {input.xlsx} {input.html} *.rnk ash_rnk-* {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST}:$GSEA_PUBLISH_DIR; 
+		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} ln -s $GSEA_PUBLISH_DIR/ash_rnk-* /var/www/html/epigen/shinySea/hash; 
 		echo 'publish done' > {output}
 	"""
 
