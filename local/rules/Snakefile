@@ -157,7 +157,7 @@ rule multi_fGSEA:
 		"multi_GSEA.gz"
 	shell: """
 		matrix_reduce -t 'fGSEA_Results/*.rnk.*.gmt.fGSEA.tab' \
-		| tr ';' '\\t' | grep -v 'nMoreExtreme' | gzip > {output}
+		| tr ';' '\\t' | grep -v 'nMoreExtreme' | sort -k4,4g | gzip > {output}
 	"""
 
 """
