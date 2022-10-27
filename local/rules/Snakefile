@@ -156,7 +156,7 @@ rule multi_fGSEA:
 	output:
 		"multi_GSEA.gz"
 	shell: """
-		matrix_reduce -t 'fGSEA_Results/*.rnk.*.fGSEA.tab' \
+		matrix_reduce -t 'fGSEA_Results/*.rnk.*.gmt.fGSEA.tab' \
 		| tr ';' '\\t' | grep -v 'nMoreExtreme' | gzip > {output}
 	"""
 
@@ -201,7 +201,7 @@ rule multi_fGSEA_link:
 		| translate -a -r <(tr " " "\\t" < {input.ash_rnk} | cut -f3- | sed "s/.rnk//") 1  \
 		| bawk '{{HTTP="http://"; if(length($3)>100){{HTTP=""}} print $1~9, \
 			HTTP "molinerislab.shinyapps.io/shinysea/?rnk=" $10 "&geneset=" $2 "_" $3 "&gseaParam=" {config[GSEA_WEIGHT]}, \
-			HTTP "www.gsea-msigdb.org/gsea/msigdb/geneset_page.jsp?geneSetName=" $3}}' \
+			"www.gsea-msigdb.org/gsea/msigdb/geneset_page.jsp?geneSetName=" $3}}' \
 		| gzip > {output}
 	"""
 
