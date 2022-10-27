@@ -26,7 +26,7 @@ https://molinerislab.shinyapps.io/shinysea/
 ```{r echo = FALSE, cache = FALSE}
 barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN = 20){
   
-  toplot <- as.data.frame(subset(fgseaRes, select= c("pathway", "msigdb_type", "NES")))
+  toplot <- as.data.frame(subset(fgseaRes, select= c("pathway", "msigdb_type", "NES", "pval", "padj")))
   
   if(!is.null(qTh))
     toplot <- subset(toplot, fgseaRes$padj<qTh)
@@ -37,16 +37,18 @@ barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN =
   toplot$direction <- factor(sign(toplot$NES))
   
   toplot$pathway <- gsub("_", " ", toplot$pathway)
-  #toplot$pathway <- gsub("MM |^GO|MF ", "", toplot$pathway)
-  #toplot$pathway <- gsub("(KEGG|REACTOME)", "\\1:", toplot$pathway)
+  toplot$pathway <- gsub("GOMF |GOBP |GOCC ", "", toplot$pathway)
+  toplot$pathway <- gsub("KEGG |REACTOME ", "", toplot$pathway)
   
   toplot <- rbind(top_n(toplot, topN/2, NES), top_n(toplot, -(topN/2), NES))
   toplot$pathway <- factor(toplot$pathway, levels = toplot$pathway[order(toplot$NES)])
   
+  toplot$alpha_pval <- ifelse(toplot$padj<=.05, .8, .2)
+  
   title <- toplot$msigdb_type[1]
   
-  ggplot(toplot, aes(x = pathway, y = NES, fill = direction)) + 
-    geom_col() + coord_flip() + ggtitle(title) + theme_bw() + my_theme + 
+  ggplot(toplot, aes(x = pathway, y = NES, fill = direction, alpha = I(alpha_pval))) + 
+    geom_col(width = .8) + coord_flip() + ggtitle(title) + theme_bw() + my_theme + 
     scale_fill_manual(values = c("#004C99", "#CC0000")) + theme(legend.position="none") 
 }
 ```
@@ -57,7 +59,7 @@ barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN =
 suppressMessages(library(ggplot2))
 suppressMessages(library(dplyr))
 suppressMessages(suppressWarnings(library(RNAseqRtools)))
-suppressMessages(library(knitr))
+#suppressMessages(library(knitr))
 suppressMessages(library(DT))
 
 infile <- "multi_GSEA.link.header_added.gz"
@@ -77,7 +79,7 @@ suppressWarnings(
   suppressMessages(
     DT::datatable(z
                   , filter = "top"
-                  , options = list(columnDefs = list(list(targets = 4:10
+                  , options = list(columnDefs = list(list(targets = 4:11
                                                           , searchable = FALSE
                                                           , render = render))
                   )
@@ -97,9 +99,10 @@ template <- "\n
 lapply(z_list, function(x){
   cat(sprintf(template, x$msigdb_type[1]))
   for (cont in contrasts) {
-    cat(sprintf("#### Contrast: %s",cont))
+    cat(sprintf("\n#### Contrast: %s\n",cont))
     x_cont <- subset(x,x$contrast==cont)
     print(barplot_multi_fGSEA(x_cont))
+    cat("\n")
   }
   #x <- x[order(x$pval),]
   #DT::datatable(subset(x, select = -c(msigdb_type)))
