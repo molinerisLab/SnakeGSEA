@@ -2,11 +2,8 @@ import os
 
 configfile:"config.yaml"
 
-#shell.suffix("; sleep 5")
-
 #if os.path.exists("Snakefile_versioned.sk"):
 #    include "Snakefile_versioned.sk"
-
 
 
 ################
@@ -20,7 +17,7 @@ BIOINFO_REFERENCE_ROOT=REFERENCE_ROOT + "bioinfotree/task/"
 CONDA_ACTIVATE="set +u; source %sminiconda2/etc/profile.d/conda.sh ; conda activate ; conda activate" % REFERENCE_ROOT
 
 MSIGDB_VERSION=config["MSIGDB_VERSION"]
-MSIGDB_DIR=BIOINFO_REFERENCE_ROOT+"/msigdb/dataset/"+MSIGDB_VERSION
+MSIGDB_DIR=BIOINFO_REFERENCE_ROOT+"msigdb/dataset/"+MSIGDB_VERSION
 
 GMT=config["MSIGDB_TYPES"][config["MSIGDB_VERSION"]]
 
@@ -36,6 +33,7 @@ if not RNK_FILES:
 if not RNK_FILES:
 	exit("Files .rnk not found and can not find suitable files in BiT RNAseq pipeline, see https://github.com/molinerisLab/SnakeGSEA/")
 
+
 ##############
 #
 # ALL targets
@@ -47,7 +45,6 @@ rule all:
 		"multi_GSEA.link.header_added.xlsx",
 		"multi_GSEA.html",
 #		"gsea_publish_done"
-
 
 
 ################
@@ -72,6 +69,7 @@ rule tab_to_xlsx:
 	shell: """
 		zcat {input} | tab2xlsx > {output}
 	"""
+
 
 ######################
 #
@@ -103,6 +101,7 @@ rule logFC_pval_rnk:
 
 """
 
+
 ######################
 #
 # GESA specific rules
@@ -117,17 +116,16 @@ rule create_gmt_gz:
 		gunzip < {input} > {output}
 	"""
 
-rule create_gmt:
-	input:
-		MSIGDB_DIR+"/{gene_set}."+MSIGDB_VERSION+".symbols.gmt"
-	output:
-		"{gene_set}.gmt"
-	wildcard_constraints:
-	        gene_set="[^\/]+"
-	shell:"""
-		ln -s {input} {output}
-	"""
-
+#rule create_gmt:
+#	input:
+#		MSIGDB_DIR+"/{gene_set}."+MSIGDB_VERSION+".symbols.gmt"
+#	output:
+#		"{gene_set}.gmt"
+#	wildcard_constraints:
+#	        gene_set="[^\/]+"
+#	shell:"""
+#		ln -s {input} {output}
+#	"""
 
 rule run_fgsea:
 	input:
@@ -147,7 +145,6 @@ rule run_fgsea:
 			-l Leading_Edge \
 			--gseaParam {config[GSEA_WEIGHT]}
 	"""
-
 
 rule multi_fGSEA:
 	input:
