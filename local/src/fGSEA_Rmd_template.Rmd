@@ -26,6 +26,10 @@ https://molinerislab.shinyapps.io/shinysea/
 ```{r echo = FALSE, cache = FALSE}
 barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN = 20){
   
+  if(nrow(fgseaRes)<topN){
+    stop(paste0("Can not found 20 geneset in multi_GSEA.link.header_added.gz\n\tcontrast: ", unique(fgseaRes$contrast), "\n\tmsigdb: ", unique(fgseaRes$msigdb_type)))
+  }
+ 
   toplot <- as.data.frame(subset(fgseaRes, select= c("pathway", "msigdb_type", "NES", "pval", "padj")))
   
   if(!is.null(qTh))
