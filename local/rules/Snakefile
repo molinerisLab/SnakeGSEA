@@ -130,6 +130,7 @@ rule run_fgsea:
 		rnk_file="{rnk_file}.rnk"
 	output:
 		"fGSEA_Results/{rnk_file}.rnk.{gmt_file}.gmt.fGSEA.tab"
+	threads: 24
 	shell: """
 		{CONDA_ACTIVATE} rstudio_Rv4.0.3; export LD_LIBRARY_PATH=/sto1/ref/miniconda2/envs/rstudio_Rv4.0.3/jre/lib/amd64/server; \
 		Rscript ../../local/bin/fgsea.CommandLine.R \
@@ -140,7 +141,8 @@ rule run_fgsea:
 			-s {config[MIN_GENES_IN_SET]} \
 			-d fGSEA_Results \
 			-l Leading_Edge \
-			--gseaParam {config[GSEA_WEIGHT]}
+			--gseaParam {config[GSEA_WEIGHT]}\
+			-j {threads}
 	"""
 
 rule multi_fGSEA:

@@ -43,7 +43,9 @@ option_list <- list(
   make_option(c("-f", "--filetype"), action ="store", default="csv",
               help="Determines file type for fgsea results (csv by default) and fgsea Leading Edges Details (tsv by default)"),
   make_option("--gseaParam", type="integer", default=0,
-              help="GSEA parameter value, all gene-level stats are raised to the power of gseaParam before calculation of ES.")
+              help="GSEA parameter value, all gene-level stats are raised to the power of gseaParam before calculation of ES."),
+  make_option(c("-j","--cores"), type="integer", default=1,
+              help="Parallelization.")
 )
 opt <- parse_args(OptionParser(option_list = option_list))
 
@@ -70,12 +72,14 @@ outfile <- paste0(opt$rnkfile, ".", opt$gmtfile, ".fGSEA")
 
 # Run fGSEA
 # Add condition: if(simple or multilevel)
-fgseaRes <- fgsea::fgseaSimple(pathways = gmt 
-                      , stats    = rnk_vector
-                      , nperm    = opt$nperm
-                      , minSize  = opt$smallest
-                      , maxSize  = opt$biggest
-                      , gseaParam = opt$gseaParam) #https://www.biostars.org/p/263074/
+fgseaRes <- fgsea::fgseaSimple(pathways = gmt,
+	stats    = rnk_vector,
+	nperm    = opt$nperm,
+	minSize  = opt$smallest,
+	maxSize  = opt$biggest,
+	gseaParam = opt$gseaParam, #https://www.biostars.org/p/263074/
+	nproc = opt$cores,
+)
 
 # Check fGSEA output
 if(!is.null(fgseaRes)){
