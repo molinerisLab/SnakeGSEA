@@ -2,8 +2,8 @@ import os
 
 configfile:"config.yaml"
 
-#if os.path.exists("Snakefile_versioned.sk"):
-#    include "Snakefile_versioned.sk"
+if os.path.exists("Snakefile_versioned.sk"):
+    include "Snakefile_versioned.sk"
 
 
 ################
@@ -17,7 +17,7 @@ BIOINFO_REFERENCE_ROOT=REFERENCE_ROOT + "bioinfotree/task/"
 CONDA_ACTIVATE="set +u; source %sminiconda2/etc/profile.d/conda.sh ; conda activate ; conda activate" % REFERENCE_ROOT
 
 MSIGDB_VERSION=config["MSIGDB_VERSION"]
-MSIGDB_DIR=BIOINFO_REFERENCE_ROOT+"msigdb/dataset/"+MSIGDB_VERSION
+MSIGDB_DIR=BIOINFO_REFERENCE_ROOT+"/msigdb/dataset/"+MSIGDB_VERSION
 
 GMT=config["MSIGDB_TYPES"][config["MSIGDB_VERSION"]]
 
@@ -32,7 +32,6 @@ if not RNK_FILES:
 	RNK_FILES = ["{d}.{c}.{r}".format(d=dge, c=cont, r=config["RNK_METRIC"]) for dge, cont in zip(GLOB.dgetool, GLOB.contrast)]
 if not RNK_FILES:
 	exit("Files .rnk not found and can not find suitable files in BiT RNAseq pipeline, see https://github.com/molinerisLab/SnakeGSEA/")
-
 
 ##############
 #
@@ -70,7 +69,6 @@ rule tab_to_xlsx:
 		zcat {input} | tab2xlsx > {output}
 	"""
 
-
 ######################
 #
 # BiT RNAseq  specific rules
@@ -100,7 +98,6 @@ rule logFC_pval_rnk:
 	2	value
 
 """
-
 
 ######################
 #
@@ -154,7 +151,7 @@ rule multi_fGSEA:
 		"multi_GSEA.gz"
 	shell: """
 		matrix_reduce -t 'fGSEA_Results/*.rnk.*.gmt.fGSEA.tab' \
-		| tr ';' '\\t' | grep -v 'nMoreExtreme' | sort -k4,4g | gzip > {output}
+		| tr ';' '\\t' | grep -v 'nMoreExtreme' | bsort -k4,4g | gzip > {output}
 	"""
 
 """
