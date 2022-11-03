@@ -1,4 +1,4 @@
-MSIGDB_VERSION: "v2022.1.Mm"
+MSIGDB_VERSION: "v7.5.1"
 # e.g. v7.5.1|v2022.1.Mm/
 
 # Dashed list of msigdb collection of geneset to be investigated
