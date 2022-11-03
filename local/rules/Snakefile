@@ -121,7 +121,7 @@ rule create_gmt_gz:
 #	wildcard_constraints:
 #	        gene_set="[^\/]+"
 #	shell:"""
-#		ln -s {input} {output}
+#		ln -sf {input} {output}
 #	"""
 
 rule run_fgsea:
@@ -181,7 +181,7 @@ rule mdsum_file:
 			touch -a {output}; \
 			a=$PWD'/'$i; \
 			b=$(md5sum $a | tr " " "\\t" | cut -f 1); \
-			echo | bawk -v b=$b -v i=$i '{{print "ln -s "i" ash_rnk-"b}}' >> {output}; \
+			echo | bawk -v b=$b -v i=$i '{{print "ln -sf "i" ash_rnk-"b}}' >> {output}; \
 		done; \
 		cat {output} | sh
 	"""
@@ -248,7 +248,7 @@ rule publish:
 		GSEA_PUBLISH_DIR=$(pwd | sed 's/\/sto1/\/var\/www\/html/');
 		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} mkdir -p $GSEA_PUBLISH_DIR; 
 		rsync -avP {input.xlsx} {input.html} *.rnk ash_rnk-* {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST}:$GSEA_PUBLISH_DIR; 
-		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} ln -s $GSEA_PUBLISH_DIR/ash_rnk-* /var/www/html/epigen/shinySea/hash; 
+		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} ln -sf $GSEA_PUBLISH_DIR/ash_rnk-* /var/www/html/epigen/shinySea/hash; 
 		echo 'publish done' > {output}
 	"""
 
