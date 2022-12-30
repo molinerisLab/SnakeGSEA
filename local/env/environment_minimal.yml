@@ -1,0 +1,9 @@
+name: SnakeGSEA_Env
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - snakemake=7.19.1
+  - bioconductor-fgsea=1.24.0
+prefix: /opt/conda/miniconda3/envs/SnakeGSEA_Env
