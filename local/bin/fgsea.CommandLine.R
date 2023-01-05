@@ -1,7 +1,6 @@
 #!/usr/bin/env Rscript
 
 library(fgsea)
-library(BiocParallel)
 library(optparse)
 library(ggplot2)
 
