@@ -1,4 +1,4 @@
-name: bit_rnaseq_3.5
+name: SnakeGSEA_Env
 channels:
   - bioconda
   - conda-forge
@@ -23,7 +23,7 @@ dependencies:
   - bioconductor-genefilter=1.76.0=r41ha086028_1
   - bioconductor-geneplotter=1.72.0=r41hdfd78af_0
   - bioconductor-genomeinfodb=1.30.0=r41hdfd78af_0
-  - bioconductor-genomeinfodbdata=1.2.7=r41hdfd78af_1
+    # - bioconductor-genomeinfodbdata=1.2.7=r41hdfd78af_1
   - bioconductor-genomicranges=1.46.1=r41h5c21468_0
   - bioconductor-geoquery=2.62.0=r41hdfd78af_0
   - bioconductor-iranges=2.28.0=r41h5c21468_1
@@ -431,7 +431,5 @@ dependencies:
   - xz=5.2.5=h516909a_1
   - zlib=1.2.12=h166bdaf_2
   - zstd=1.5.2=h8a70e8d_2
-  - pip:
-    - dap==0.1
-prefix: /sto1/ref/miniconda2/envs/bit_rnaseq_3.5
-
+    #  - pip:
+    #   - dap==0.1
