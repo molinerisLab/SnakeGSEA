@@ -6,15 +6,20 @@ if os.path.exists("Snakefile_versioned.sk"):
     include: "Snakefile_versioned.sk"
 
 
+# WARNING
+# !!
+# RNAseqRtools and bioinfotree tools must be installed in the base env
+# !!
+
 ################
 #
 # Global Params
 #
 
 REFERENCE_ROOT=os.environ.get("REFERENCE_ROOT")
-BIOINFO_REFERENCE_ROOT=REFERENCE_ROOT + "bioinfotree/task/"
+BIOINFO_REFERENCE_ROOT=REFERENCE_ROOT + "/bioinfotree/task"
 
-CONDA_ACTIVATE="set +u; source %sminiconda2/etc/profile.d/conda.sh ; conda activate ; conda activate" % REFERENCE_ROOT
+#CONDA_ACTIVATE="set +u; source %sminiconda2/etc/profile.d/conda.sh ; conda activate ; conda activate" % REFERENCE_ROOT
 
 MSIGDB_VERSION=config["MSIGDB_VERSION"]
 MSIGDB_DIR=BIOINFO_REFERENCE_ROOT+"/msigdb/dataset/"+MSIGDB_VERSION
@@ -42,7 +47,7 @@ rule all:
 	input:
 		"multi_GSEA.link.header_added.gz",
 		"multi_GSEA.link.header_added.xlsx",
-		"multi_GSEA.html",
+		"multi_GSEA.html"
 #		"gsea_publish_done"
 
 
@@ -124,6 +129,7 @@ rule create_gmt_gz:
 #		ln -sf {input} {output}
 #	"""
 
+# https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#integrated-package-management
 rule run_fgsea:
 	input:
 		gmt_file="{gmt_file}.gmt",
@@ -131,8 +137,9 @@ rule run_fgsea:
 	output:
 		"fGSEA_Results/{rnk_file}.rnk.{gmt_file}.gmt.fGSEA.tab"
 	threads: 24
+	conda:
+		"../../local/env/fGSEA_Env.yaml"
 	shell: """
-		{CONDA_ACTIVATE} rstudio_Rv4.0.3; export LD_LIBRARY_PATH=/sto1/ref/miniconda2/envs/rstudio_Rv4.0.3/jre/lib/amd64/server; \
 		Rscript ../../local/bin/fgsea.CommandLine.R \
 			-g {input.gmt_file} \
 			-r {input.rnk_file} \
@@ -151,6 +158,8 @@ rule multi_fGSEA:
 			, rnk_file=RNK_FILES, gmt=GMT)
 	output:
 		"multi_GSEA.gz"
+	#conda:
+	#	"../../local/env/bit_rnaseq_3_local.yaml"
 	shell: """
 		matrix_reduce -t 'fGSEA_Results/*.rnk.*.gmt.fGSEA.tab' \
 		| tr ';' '\\t' | grep -v 'nMoreExtreme' | bsort -k4,4g | gzip > {output}
@@ -196,7 +205,7 @@ rule multi_fGSEA_link:
 		zcat multi_GSEA.gz \
 		| translate -a -r <(tr " " "\\t" < {input.ash_rnk} | cut -f3- | sed "s/.rnk//") 1  \
 		| bawk '{{HTTP="http://"; if(length($3)>100){{HTTP=""}} print $1~9, \
-			HTTP "molinerislab.shinyapps.io/shinysea/?rnk=" $10 "&geneset=" $2 "_" $3 "&gseaParam=" {config[GSEA_WEIGHT]}, \
+			"molinerislab.shinyapps.io/shinysea/?rnk=" $10 "&geneset=" $2 "_" $3 "&gseaParam=" {config[GSEA_WEIGHT]}, \
 			"www.gsea-msigdb.org/gsea/msigdb/geneset_page.jsp?geneSetName=" $3}}' \
 		| gzip > {output}
 	"""
@@ -232,8 +241,9 @@ rule multi_fGSEA_link_html:
 		rmd="fGSEA_Rmd_template.Rmd"
 	output:
 		"multi_GSEA.html"
+	#conda:
+	#	"../../local/env/fGSEA_Env.yaml"
 	shell:"""
-		{CONDA_ACTIVATE} rstudio_Rv4.0.3; export LD_LIBRARY_PATH=/sto1/ref/miniconda2/envs/rstudio_Rv4.0.3/jre/lib/amd64/server; \
 		Rscript -e 'library(rmarkdown); rmarkdown::render("{input.rmd}", output_file="{output}", quiet=TRUE)'
 	"""
 
