@@ -56,11 +56,14 @@ rule all:
 # Generic rules
 #
 
+# https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#integrated-package-management
 rule header_added_gz:
 	input:
 		"{file}.gz"
 	output:
 		"{file}.header_added.gz"
+	#conda:
+	#	"../../local/env/bit_rnaseq_3_local.yaml"
 	shell:"""
 		(bawk -M {input} | cut -f 2 | transpose; zcat {input} ) | gzip > {output}
 	"""
@@ -70,6 +73,8 @@ rule tab_to_xlsx:
 		"{file}.gz"
 	output:
 		"{file}.xlsx"
+	#conda:
+	#	"../../local/env/bit_rnaseq_3_local.yaml"
 	shell: """
 		zcat {input} | tab2xlsx > {output}
 	"""
@@ -129,7 +134,6 @@ rule create_gmt_gz:
 #		ln -sf {input} {output}
 #	"""
 
-# https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#integrated-package-management
 rule run_fgsea:
 	input:
 		gmt_file="{gmt_file}.gmt",
@@ -137,8 +141,8 @@ rule run_fgsea:
 	output:
 		"fGSEA_Results/{rnk_file}.rnk.{gmt_file}.gmt.fGSEA.tab"
 	threads: 24
-	conda:
-		"../../local/env/fGSEA_Env.yaml"
+	#conda:
+	#	"../../local/env/fGSEA_Env.yaml"
 	shell: """
 		Rscript ../../local/bin/fgsea.CommandLine.R \
 			-g {input.gmt_file} \
@@ -158,8 +162,6 @@ rule multi_fGSEA:
 			, rnk_file=RNK_FILES, gmt=GMT)
 	output:
 		"multi_GSEA.gz"
-	#conda:
-	#	"../../local/env/bit_rnaseq_3_local.yaml"
 	shell: """
 		matrix_reduce -t 'fGSEA_Results/*.rnk.*.gmt.fGSEA.tab' \
 		| tr ';' '\\t' | grep -v 'nMoreExtreme' | bsort -k4,4g | gzip > {output}
@@ -241,8 +243,6 @@ rule multi_fGSEA_link_html:
 		rmd="fGSEA_Rmd_template.Rmd"
 	output:
 		"multi_GSEA.html"
-	#conda:
-	#	"../../local/env/fGSEA_Env.yaml"
 	shell:"""
 		Rscript -e 'library(rmarkdown); rmarkdown::render("{input.rmd}", output_file="{output}", quiet=TRUE)'
 	"""
