@@ -14,10 +14,10 @@ git clone git@github.com:molinerisLab/SnakeGSEA.git SnakeGSEA
 
 Move to SnakeGSEA directory and create the SnakeGSEA_Env environment with all dependencies
 ```
-conda env create -f local/env/environment.yml -n SnakeGSEA_Env
+conda env create -f local/env/environment.yaml -n SnakeGSEA_Env
 ```
 
-Set the proper parameters in `config.yaml` file and then run
+Move to `dataset/v1` directory and set the proper parameters in `config.yaml` file. Then run
 ```
 snakemake -p -j N all
 ```
