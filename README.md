@@ -19,7 +19,7 @@ conda env create -f local/env/environment.yaml -n SnakeGSEA_Env
 
 Move to `dataset/v1` directory and set the proper parameters in `config.yaml` file. Then run
 ```
-snakemake -p -j N all
+snakemake -p -j N_CORES all
 ```
 
 ## Output
