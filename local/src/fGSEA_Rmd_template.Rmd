@@ -52,8 +52,18 @@ barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN =
   title <- toplot$msigdb_type[1]
   
   ggplot(toplot, aes(x = pathway, y = NES, fill = direction, alpha = I(alpha_pval))) + 
-    geom_col(width = .8) + coord_flip() + ggtitle(title) + theme_bw() + my_theme + 
-    scale_fill_manual(values = c("#004C99", "#CC0000")) + theme(legend.position="none") 
+    geom_col(width = .8) + coord_flip() + ggtitle(title) + theme_bw() + theme(legend.position = "bottom"
+                , line = element_line(size=0.5)
+                , legend.title   = element_text(color="black",size=8)
+                , legend.text    = element_text(color="black",size=8)
+                , axis.title     = element_text(color="black",size=8)
+                , axis.text      = element_text(color="black",size=8)
+                , axis.line      = element_line(linewidth=0.25)
+                , panel.grid.major = element_line(linewidth=0.25)
+                , panel.grid.minor = element_blank()
+		, strip.text       = element_text(size=8)
+		, strip.background = element_rect(fill = NA)
+		, plot.title = element_text(size = 8, hjust = 0.5, face = "plain")) + scale_fill_manual(values = c("#004C99", "#CC0000")) + theme(legend.position="none") 
 }
 ```
 
@@ -62,7 +72,7 @@ barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN =
 ```{r echo = FALSE, results = "asis", cache = FALSE}
 suppressMessages(library(ggplot2))
 suppressMessages(library(dplyr))
-suppressMessages(suppressWarnings(library(RNAseqRtools)))
+#suppressMessages(suppressWarnings(library(RNAseqRtools)))
 #suppressMessages(library(knitr))
 suppressMessages(library(DT))
 
