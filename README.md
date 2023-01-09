@@ -2,7 +2,7 @@
 
 A Snakemake pipeline to perform fastGSEA after `bit_rnaseq` differential gene expression analysis.
 
-## Install
+## Installation
 
 ### Download MSigDB data
 
@@ -11,11 +11,11 @@ Download for the geneset for [Human](http://www.gsea-msigdb.org/gsea/msigdb/coll
 
 http://www.gsea-msigdb.org/gsea/msigdb/download_file.jsp?filePath=/msigdb/release/2022.1.Hs/msigdb_v2022.1.Hs_files_to_download_locally.zip
 
-and/or for [Mouse](https://www.gsea-msigdb.org/gsea/msigdb/mouse/collections.jsp).
+and/or for [Mouse](https://www.gsea-msigdb.org/gsea/msigdb/mouse/collections.jsp)
 
 http://www.gsea-msigdb.org/gsea/msigdb/download_file.jsp?filePath=/msigdb/release/2022.1.Mm/msigdb_v2022.1.Mm_files_to_download_locally.zip
 
-### Install dependenties 
+### Install dependencies 
 
 Clone the repository
 ```
@@ -39,7 +39,7 @@ snakemake -p -j N_CORES all
 Put `N_CORES` to the number of CPUs you waunt to use.
 
 ## Output
-SnakeGSEA pipeline priduces the following files:
+SnakeGSEA pipeline produces the following files:
 
 - multi_GSEA.link.header_added.xlsx
 ```
