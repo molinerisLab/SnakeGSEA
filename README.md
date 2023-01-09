@@ -29,10 +29,14 @@ Move to SnakeGSEA directory obtained with `git clone` and create the SnakeGSEA_E
 conda env create -f local/env/environment.yaml -n fGSEA_Env
 ```
 
-Move to `dataset/v1` directory and set the proper parameters in `config.yaml` file. Then run
+Move to `dataset/v1` directory and set the proper parameters in `config.yaml` file.
+The parameters are documented in the file itself.
+
+Then run
 ```
 snakemake -p -j N_CORES all
 ```
+Put `N_CORES` to the number of CPUs you waunt to use.
 
 ## Output
 SnakeGSEA pipeline priduces the following files:
