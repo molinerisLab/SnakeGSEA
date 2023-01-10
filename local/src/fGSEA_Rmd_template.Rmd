@@ -21,7 +21,7 @@ cat(paste0("http://olilab.unito.it", gsea_publish_dir, "/multi_GSEA.link.header_
 https://molinerislab.shinyapps.io/shinysea/
 
 
-## Access MSigDb results {.tabset .tabset-pills}
+## Access MSigDB results {.tabset .tabset-pills}
 
 ```{r echo = FALSE, cache = FALSE}
 barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN = 20){
@@ -55,10 +55,9 @@ barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN =
     geom_col(width = .8) + 
     coord_flip() + 
     ggtitle(title) + 
-    theme_bw() + 
-    theme(legend.position = "bottom", line = element_line(size=0.5), legend.title = element_text(color="black",size=8), legend.text = element_text(color="black",size=8), axis.title = element_text(color="black",size=8), axis.text = element_text(color="black",size=8), axis.line = element_line(linewidth=0.25), panel.grid.major = element_line(linewidth=0.25), panel.grid.minor = element_blank(), strip.text = element_text(size=8), strip.background = element_rect(fill = NA), plot.title = element_text(size = 8, hjust = 0.5, face = "plain")) + 
-    scale_fill_manual(values = c("#004C99", "#CC0000")) + 
-    theme(legend.position="none") 
+    theme_bw(base_size = 9) + 
+    theme(legend.position = "none", line = element_line(linewidth=0.5), axis.line = element_line(linewidth=0.25), panel.grid.major = element_line(linewidth=0.25), panel.grid.minor = element_blank(), strip.background = element_rect(fill = NA), plot.title = element_text(size = 8, hjust = 0.5, face = "plain")) + 
+    scale_fill_manual(values = c("#004C99", "#CC0000"))
 }
 ```
 
@@ -87,12 +86,13 @@ render <- JS(
 suppressWarnings(
   suppressMessages(
     DT::datatable(z
+                  , rownames = FALSE
                   , filter = "top"
-                  , options = list(columnDefs = list(list(targets = 4:11
+                  , options = list(columnDefs = list(list(targets = 3:10
                                                           , searchable = FALSE
-                                                          , render = render))
+                                                          , render = render)))
                   )
-  )
+    %>% formatSignif(c("pval","padj","ES","NES"), digits=2) #https://stackoverflow.com/questions/49634329/how-to-force-scientific-notation-with-renderdt
   )
 )
 
