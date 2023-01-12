@@ -56,14 +56,11 @@ rule all:
 # Generic rules
 #
 
-# https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#integrated-package-management
 rule header_added_gz:
 	input:
 		"{file}.gz"
 	output:
 		"{file}.header_added.gz"
-	#conda:
-	#	"../../local/env/bit_rnaseq_3_local.yaml"
 	shell:"""
 		(bawk -M {input} | cut -f 2 | transpose; zcat {input} ) | gzip > {output}
 	"""
@@ -73,8 +70,6 @@ rule tab_to_xlsx:
 		"{file}.gz"
 	output:
 		"{file}.xlsx"
-	#conda:
-	#	"../../local/env/bit_rnaseq_3_local.yaml"
 	shell: """
 		zcat {input} | tab2xlsx > {output}
 	"""
