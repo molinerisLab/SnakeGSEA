@@ -85,7 +85,7 @@ rule logFC_rnk:
 	output:
 		"{dgetool}.{contrast}.logFC.rnk"
 	shell: """
-		bawk '$Pvalue_adj!="NA" {{print $GeneID, $logFC}}' {input} | bsort -k2,2g > {output}
+		bawk '$Pvalue_adj!="NA" {{print $GeneID, $logFC}}' {input} | sort -k2,2g > {output}
 	"""
 
 rule logFC_pval_rnk:
@@ -94,7 +94,7 @@ rule logFC_pval_rnk:
 	output:
 		"{dgetool}.{contrast}.logFC_pval.rnk"
 	shell: """
-		bawk '$Pvalue_adj!="NA" {{print $GeneID, $logFC*(-log($Pvalue)/log(10))}}' {input} | bsort -k2,2g > {output}
+		bawk '$Pvalue_adj!="NA" {{print $GeneID, $logFC*(-log($Pvalue)/log(10))}}' {input} | sort -k2,2g > {output}
 	"""
 
 """
@@ -159,7 +159,7 @@ rule multi_fGSEA:
 		"multi_GSEA.gz"
 	shell: """
 		matrix_reduce -t 'fGSEA_Results/*.rnk.*.gmt.fGSEA.tab' \
-		| tr ';' '\\t' | grep -v 'nMoreExtreme' | bsort -k4,4g | gzip > {output}
+		| tr ';' '\\t' | grep -v 'nMoreExtreme' | sort -k4,4g | gzip > {output}
 	"""
 
 """
