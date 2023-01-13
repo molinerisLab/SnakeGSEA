@@ -19,6 +19,7 @@ dependencies:
   - attrs=22.2.0=pyh71513ae_0
   - backports=1.1=pyhd3eb1b0_0
   - backports.functools_lru_cache=1.6.4=pyhd8ed1ab_0
+  - bawk=1.1=pl5262_0
   - bcrypt=3.2.2=py311hd4cff14_1
   - binutils_impl_linux-64=2.39=he00db2b_1
   - bioconductor-biocparallel=1.32.0=r42hc247a5b_0
@@ -145,6 +146,7 @@ dependencies:
   - logmuse=0.2.6=pyh8c360ce_0
   - make=4.3=hd18ef5c_1
   - markupsafe=2.1.1=py311hd4cff14_2
+  - matrix_reduce=1.1=pl5262_0
   - multidict=6.0.4=py311h2582759_0
   - nbformat=5.7.1=pyhd8ed1ab_0
   - ncurses=6.3=h27087fc_1
@@ -412,4 +414,3 @@ dependencies:
   - zipp=3.11.0=pyhd8ed1ab_0
   - zlib=1.2.13=h166bdaf_4
   - zstd=1.5.2=h6239696_4
-prefix: /opt/conda/miniconda3/envs/SnakeGSEA_Env
