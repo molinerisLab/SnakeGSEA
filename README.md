@@ -57,4 +57,7 @@ Browser version of the multi_GSEA.link.header_added.xlsx table followed by the b
 ## SnakeGSEA from other pipelines
 
 SnakeGSEA can be applied on a generic pre-ranked list of genes produced from your custom analysis workflows.
-Create the `contrast.rnk` files and list all the contrast names in the `config.yaml` file.
+
+Create the `contrast.rnk` files in the current directory and then run `snakemake -p -j N_CORES all`. 
+
+You do not have to modify the `config.yaml`. Eventual rnk files from bit_rna_seq pipelines will be ignored.
