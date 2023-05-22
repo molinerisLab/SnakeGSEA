@@ -61,6 +61,8 @@ Browser version of the multi_GSEA.link.header_added.xlsx table followed by the b
 snakemake -p -j 1 publish
 ```
 
+After the publishg as been completed it is possible to interactively build GSEA plots using the [shinySea](https://github.com/molinerisLab/shinySea) app for each geneset.
+In the html and xlsx ouput there are link that point to this app.
 
 
 ## SnakeGSEA from other pipelines
