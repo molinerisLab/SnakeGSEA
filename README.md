@@ -4,28 +4,30 @@ A Snakemake pipeline to perform fastGSEA after `bit_rnaseq` differential gene ex
 
 ## Installation
 
-### Download MSigDB data
-
-SnakeGSEA uses gene set collections provided by MSigDB. Here the links for the download of the gene sets for [Human](http://www.gsea-msigdb.org/gsea/msigdb/download_file.jsp?filePath=/msigdb/release/2022.1.Hs/msigdb_v2022.1.Hs_files_to_download_locally.zip) and [Mouse](http://www.gsea-msigdb.org/gsea/msigdb/download_file.jsp?filePath=/msigdb/release/2022.1.Mm/msigdb_v2022.1.Mm_files_to_download_locally.zip)
-
-### Install dependencies 
-
 Clone the repository
 ```
 git clone git@github.com:molinerisLab/SnakeGSEA.git SnakeGSEA
 ```
 
-## Usage
+### Install dependencies 
 
 Move to SnakeGSEA directory obtained with `git clone` and create the SnakeGSEA_Env environment with all dependencies
 ```
 conda env create -f local/env/environment.yml -n SnakeGSEA_Env
 ```
 
+### Download MSigDB data
+
+SnakeGSEA uses gene set collections provided by MSigDB. Here the links for the download of the gene sets for [Human](http://www.gsea-msigdb.org/gsea/msigdb/download_file.jsp?filePath=/msigdb/release/2022.1.Hs/msigdb_v2022.1.Hs_files_to_download_locally.zip) and [Mouse](http://www.gsea-msigdb.org/gsea/msigdb/download_file.jsp?filePath=/msigdb/release/2022.1.Mm/msigdb_v2022.1.Mm_files_to_download_locally.zip)
+
+## Usage
+
 Move to `dataset/v1` directory and set the proper parameters in `config.yaml` file.
 The parameters are documented in the file itself.
 
-Then run
+Pay attention to `MSIGDB_DIR` the variable contain the path that contain the downloaded MSigDB files.
+
+To run the pipelone: 
 ```
 snakemake -p -j N_CORES all
 ```
