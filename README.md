@@ -55,6 +55,13 @@ SnakeGSEA pipeline produces the following files:
 
 Browser version of the multi_GSEA.link.header_added.xlsx table followed by the barplot visualization of top 5 and bottom 5 gene sets ordered according to NES value. Darker bars mean a significant association of the gene set, lighter bars are related to non significant associations. A bar plot is produced for each contrast and MSigDB collection combination.
 
+## Publish to a web server
+
+```
+snakemake -p -j 1 publish
+```
+
+
 
 ## SnakeGSEA from other pipelines
 
