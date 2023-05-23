@@ -62,7 +62,7 @@ rule header_added_gz:
 	output:
 		"{file}.header_added.gz"
 	shell:"""
-		(bawk -M {input} | cut -f 2 | transpose; zcat {input} ) | gzip > {output}
+		(bawk -M {input} | cut -f 2 | tr "\\n" "\\t" | perl -lne 's/\s+$//; print'; zcat {input} ) | gzip > {output}
 	"""
 
 rule tab_to_xlsx:
@@ -250,10 +250,10 @@ rule publish:
 	output:
 		"gsea_publish_done"
 	shell:"""
-		GSEA_PUBLISH_DIR=$(pwd | sed 's/\/sto1/\/var\/www\/html/');
+		GSEA_PUBLISH_DIR=$(pwd | sed 's/{config[GSEA_PUBLISH_REPLACE_FROM]}/{config[GSEA_PUBLISH_REPLACE_TO]}/');
 		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} mkdir -p $GSEA_PUBLISH_DIR; 
 		rsync -avP {input.xlsx} {input.html} *.rnk ash_rnk-* {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST}:$GSEA_PUBLISH_DIR; 
 		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} ln -sf $GSEA_PUBLISH_DIR/ash_rnk-* /var/www/html/epigen/shinySea/hash; 
-		echo 'publish done' > {output}
+		echo {GSEA_PUBLISH_HOST}/$(sed 's|/var/www/html/||' <<<$GSEA_PUBLISH_DIR)/input.html | tee {output}
 	"""
 
