@@ -1,45 +1,44 @@
-#########################
-#
-# Species specific params
-#
-
-GENCODE_SPECIES: "hsapiens"
-# e.g. hsapiens|mmusculus
-
-GENCODE_VERSION: 37
-# e.g. 37|M25
-
-GENCODE_DIR: BIOINFO_ROOT+ "/gencode/dataset/" +GENCODE_SPECIES+ "/" +GENCODE_VERSION
-
-
-
-########################
-#
-# Differential analysis
-#
-
-DGE_TOOL: "edger"
-#e.g. limma|edger|deseq2
-
-LIMMA_CONTRASTS_NAMES:
-        - "shLINCX"
-        - "shLINCY"
-# Dashed list of contrast names employed for differential analysis
-
-
-
-######################
-#
-# GSEA specific params
-#
-
 MSIGDB_VERSION: "v7.5.1"
-# e.g. v7.5.1
-#
-MSIGDB_TYPES:
-        - "h.all"
-        - "c5.go.bp"
+# e.g. v7.5.1|v2022.1.Mm/
+
 # Dashed list of msigdb collection of geneset to be investigated
+MSIGDB_TYPES:
+        "v7.5.1":
+                - "h.all"
+                - "c1.all"
+                - "c2.cgp"
+                - "c2.cp.biocarta"
+                - "c2.cp.kegg"
+                - "c2.cp.reactome"
+                - "c2.cp"
+                - "c3.mir" 
+                - "c3.tft"
+                - "c4.cgn"
+                - "c4.cm"
+                - "c5.go.mf"
+                - "c5.go.bp"
+                - "c5.go.cc"
+                - "c6.all"
+                - "c7.all"
+                - "c8.all"
+        "v2022.1.Mm":
+                - "m1.all"
+                - "m2.cgp"
+                - "m2.cp.biocarta"
+                - "m2.cp.reactome"
+                - "m2.cp"
+                - "m2.cp.wikipathways"
+                - "m3.gtrd"
+                - "m3.mirdb"
+                - "m5.go.bp"
+                - "m5.go.cc"
+                - "m5.go.mf"
+                - "m5.go"
+                - "m5.mpt"
+                - "m8.all"
+                - "mh.all"
+
+
 
 RNK_METRIC: "logFC_pval"
 # e.g. logFC|logFC_pval
@@ -51,6 +50,7 @@ GSEA_WEIGHT: 0
 # e.g. 0|1
 # https://www.biostars.org/p/263074/
 
+MSIGDB_DIR: DAP_REFERENCE_ROOT + "/msigdb/dataset/" + MSIGDB_VERSION
 
 
 #################
@@ -59,10 +59,6 @@ GSEA_WEIGHT: 0
 #
 
 GSEA_PUBLISH_HOST: olilab01.ateneo.unito.it
-<<<<<<< HEAD
-GSEA_PUBLISH_USER: cciccone
-=======
 GSEA_PUBLISH_USER: imolineris
 GSEA_PUBLISH_REPLACE_FROM: \/home
 GSEA_PUBLISH_REPLACE_TO: \/var\/www\/html
->>>>>>> 8dbf69c (better way to transalate path on publishing web server)

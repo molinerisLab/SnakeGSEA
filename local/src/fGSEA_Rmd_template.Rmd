@@ -21,12 +21,16 @@ cat(paste0("http://olilab.unito.it", gsea_publish_dir, "/multi_GSEA.link.header_
 https://molinerislab.shinyapps.io/shinysea/
 
 
-## Access MSigDb results {.tabset .tabset-pills}
+## Access MSigDB results {.tabset .tabset-pills}
 
 ```{r echo = FALSE, cache = FALSE}
 barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN = 20){
   
-  toplot <- as.data.frame(subset(fgseaRes, select= c("pathway", "msigdb_type", "NES")))
+  if(nrow(fgseaRes)<topN){
+    stop(paste0("Can not found 20 geneset in multi_GSEA.link.header_added.gz\n\tcontrast: ", unique(fgseaRes$contrast), "\n\tmsigdb: ", unique(fgseaRes$msigdb_type)))
+  }
+ 
+  toplot <- as.data.frame(subset(fgseaRes, select= c("pathway", "msigdb_type", "NES", "pval", "padj")))
   
   if(!is.null(qTh))
     toplot <- subset(toplot, fgseaRes$padj<qTh)
@@ -37,17 +41,23 @@ barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN =
   toplot$direction <- factor(sign(toplot$NES))
   
   toplot$pathway <- gsub("_", " ", toplot$pathway)
-  #toplot$pathway <- gsub("MM |^GO|MF ", "", toplot$pathway)
-  #toplot$pathway <- gsub("(KEGG|REACTOME)", "\\1:", toplot$pathway)
+  toplot$pathway <- gsub("GOMF |GOBP |GOCC ", "", toplot$pathway)
+  toplot$pathway <- gsub("KEGG |REACTOME ", "", toplot$pathway)
   
   toplot <- rbind(top_n(toplot, topN/2, NES), top_n(toplot, -(topN/2), NES))
   toplot$pathway <- factor(toplot$pathway, levels = toplot$pathway[order(toplot$NES)])
   
+  toplot$alpha_pval <- ifelse(toplot$padj<=.05, .8, .2)
+  
   title <- toplot$msigdb_type[1]
   
-  ggplot(toplot, aes(x = pathway, y = NES, fill = direction)) + 
-    geom_col() + coord_flip() + ggtitle(title) + theme_bw() + my_theme + 
-    scale_fill_manual(values = c("#004C99", "#CC0000")) + theme(legend.position="none") 
+  ggplot(toplot, aes(x = pathway, y = NES, fill = direction, alpha = I(alpha_pval))) + 
+    geom_col(width = .8) + 
+    coord_flip() + 
+    ggtitle(title) + 
+    theme_bw(base_size = 9) + 
+    theme(legend.position = "none", line = element_line(linewidth=0.5), axis.line = element_line(linewidth=0.25), panel.grid.major = element_line(linewidth=0.25), panel.grid.minor = element_blank(), strip.background = element_rect(fill = NA), plot.title = element_text(size = 8, hjust = 0.5, face = "plain")) + 
+    scale_fill_manual(values = c("#004C99", "#CC0000"))
 }
 ```
 
@@ -56,8 +66,8 @@ barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN =
 ```{r echo = FALSE, results = "asis", cache = FALSE}
 suppressMessages(library(ggplot2))
 suppressMessages(library(dplyr))
-suppressMessages(suppressWarnings(library(RNAseqRtools)))
-suppressMessages(library(knitr))
+#suppressMessages(suppressWarnings(library(RNAseqRtools)))
+#suppressMessages(library(knitr))
 suppressMessages(library(DT))
 
 infile <- "multi_GSEA.link.header_added.gz"
@@ -76,12 +86,13 @@ render <- JS(
 suppressWarnings(
   suppressMessages(
     DT::datatable(z
+                  , rownames = FALSE
                   , filter = "top"
-                  , options = list(columnDefs = list(list(targets = 4:10
+                  , options = list(columnDefs = list(list(targets = 3:10
                                                           , searchable = FALSE
-                                                          , render = render))
+                                                          , render = render)))
                   )
-  )
+    %>% formatSignif(c("pval","padj","ES","NES"), digits=2) #https://stackoverflow.com/questions/49634329/how-to-force-scientific-notation-with-renderdt
   )
 )
 
@@ -97,9 +108,10 @@ template <- "\n
 lapply(z_list, function(x){
   cat(sprintf(template, x$msigdb_type[1]))
   for (cont in contrasts) {
-    cat(sprintf("#### Contrast: %s",cont))
+    cat(sprintf("\n#### Contrast: %s\n",cont))
     x_cont <- subset(x,x$contrast==cont)
     print(barplot_multi_fGSEA(x_cont))
+    cat("\n")
   }
   #x <- x[order(x$pval),]
   #DT::datatable(subset(x, select = -c(msigdb_type)))

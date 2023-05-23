@@ -1,7 +1,6 @@
 #!/usr/bin/env Rscript
 
 library(fgsea)
-library(BiocParallel)
 library(optparse)
 library(ggplot2)
 
@@ -43,7 +42,9 @@ option_list <- list(
   make_option(c("-f", "--filetype"), action ="store", default="csv",
               help="Determines file type for fgsea results (csv by default) and fgsea Leading Edges Details (tsv by default)"),
   make_option("--gseaParam", type="integer", default=0,
-              help="GSEA parameter value, all gene-level stats are raised to the power of gseaParam before calculation of ES.")
+              help="GSEA parameter value, all gene-level stats are raised to the power of gseaParam before calculation of ES."),
+  make_option(c("-j","--cores"), type="integer", default=1,
+              help="Parallelization.")
 )
 opt <- parse_args(OptionParser(option_list = option_list))
 
@@ -54,10 +55,10 @@ if(!opt$gseaParam %in% c(0,1))
   stop("gseaParam must be 0 or 1! Exit")
 
 # Download pathway file
-gmt <- read.gmt(paste0(opt$gmtfile,".gmt"))
+gmt <- read.gmt(paste0(opt$gmtfile))
 
 # Download rank file
-rnk <- read.table(paste0(opt$rnkfile,".rnk"), header = F, col.names = c("featureID", "value"))
+rnk <- read.table(opt$rnkfile, header = F, col.names = c("featureID", "value"))
 rnk_vector <- unlist(rnk$value)
 names(rnk_vector) <- rnk$featureID
 
@@ -66,16 +67,18 @@ if(!dir.exists(opt$directory)) dir.create(opt$directory, recursive = T, showWarn
 if(!dir.exists(opt$leadingedge)) dir.create(opt$leadingedge, recursive = T, showWarnings = FALSE)
 
 # Define output filename
-outfile <- paste0(opt$rnkfile, ".rnk.", opt$gmtfile, ".fGSEA")
+outfile <- paste0(opt$rnkfile, ".", opt$gmtfile, ".fGSEA")
 
 # Run fGSEA
 # Add condition: if(simple or multilevel)
-fgseaRes <- fgsea::fgseaSimple(pathways = gmt 
-                      , stats    = rnk_vector
-                      , nperm    = opt$nperm
-                      , minSize  = opt$smallest
-                      , maxSize  = opt$biggest
-                      , gseaParam = opt$gseaParam) #https://www.biostars.org/p/263074/
+fgseaRes <- fgsea::fgseaSimple(pathways = gmt,
+	stats    = rnk_vector,
+	nperm    = opt$nperm,
+	minSize  = opt$smallest,
+	maxSize  = opt$biggest,
+	gseaParam = opt$gseaParam, #https://www.biostars.org/p/263074/
+	nproc = opt$cores,
+)
 
 # Check fGSEA output
 if(!is.null(fgseaRes)){
