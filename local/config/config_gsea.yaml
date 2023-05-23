@@ -60,3 +60,5 @@ MSIGDB_DIR: DAP_REFERENCE_ROOT + "/msigdb/dataset/" + MSIGDB_VERSION
 
 GSEA_PUBLISH_HOST: olilab01.ateneo.unito.it
 GSEA_PUBLISH_USER: imolineris
+GSEA_PUBLISH_REPLACE_FROM: \/home
+GSEA_PUBLISH_REPLACE_TO: \/var\/www\/html
