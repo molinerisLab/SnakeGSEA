@@ -27,7 +27,7 @@ The parameters are documented in the file itself.
 
 Pay attention to `MSIGDB_DIR` the variable contain the path that contain the downloaded MSigDB files.
 
-To run the pipelone: 
+To run the pipeline: 
 ```
 snakemake -p -j N_CORES all
 ```
