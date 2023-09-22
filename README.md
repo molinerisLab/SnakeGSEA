@@ -72,3 +72,11 @@ SnakeGSEA can be applied on a generic pre-ranked list of genes produced from you
 Create the `contrast.rnk` files in the current directory and then run `snakemake -p -j N_CORES all`. 
 
 You do not have to modify the `config.yaml`. Eventual rnk files from bit_rna_seq pipelines will be ignored.
+
+## Enrichment Score Weight
+
+As reported in the [GSEA manual](https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideTEXT.htm#_GSEAPreranked_Page), the "classic" weight should be used:
+
+> The GSEA PNAS 2005 paper introduced a method where a running sum statistic is incremented by the absolute value of the ranking metric when a gene belongs to the set. This method has proven to be efficient and facilitates intuitive interpretation of ranking metrics that reflect correlation of gene expression with phenotype. In the case of GSEAPreranked, you should make sure that this weighted scoring scheme applies to your choice of ranking statistic – i.e. the magnitude of the ranking metric is biologically meaningful. When in doubt, we recommend using a more conservative scoring approach by setting Enrichment statistic = ‘classic’.
+
+
