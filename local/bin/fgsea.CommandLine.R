@@ -3,6 +3,7 @@
 library(fgsea)
 library(optparse)
 library(ggplot2)
+suppressMessages(library(dplyr))
 
 # Functions ----
 read.gmt <- function (file) 
@@ -87,14 +88,18 @@ if(!is.null(fgseaRes)){
   stop(" -- Error in fgseaSimple! Exit")
 }
 
+# Format fGSEA res for tabular output 
+fgseaRes <- fgseaRes %>% mutate(leadingEdge = sapply(leadingEdge, toString)) 
+#fgseaRes$leadingEdge <- strsplit(fgseaRes$leadingEdge, ", ")
+
 # Save results
 if (opt$filetype == "excel") {
   outfile_xlsx <- paste0(opt$directory, "/", outfile,".xlsx")
   message(" -- saving to: ", outfile_xlsx)
-  write.xlsx(subset(fgseaRes, select = -c(leadingEdge)), outfile_xlsx, col.names = T, row.names = F)
+  write.xlsx(fgseaRes, outfile_xlsx, col.names = T, row.names = F)
 } else {
   outfile_tab <- paste0(opt$directory, "/", outfile,".tab")
   message(" -- saving to: ", outfile_tab)
-  write.table(subset(fgseaRes, select = -c(leadingEdge)), outfile_tab, col.names = T, quote = F, row.names = F, sep="\t")
+  write.table(fgseaRes, outfile_tab, col.names = T, quote = F, row.names = F, sep="\t")
 }
 

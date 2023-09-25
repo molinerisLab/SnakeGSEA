@@ -173,6 +173,7 @@ rule multi_fGSEA:
 	7	NES
 	8	nMoreExtreme
 	9	size
+	10	leadingEdge
 
 """
 
@@ -201,8 +202,8 @@ rule multi_fGSEA_link:
 	shell: """
 		zcat multi_GSEA.gz \
 		| translate -a -r <(tr " " "\\t" < {input.ash_rnk} | cut -f3- | sed "s/.rnk//") 1  \
-		| bawk '{{HTTP="http://"; if(length($3)>100){{HTTP=""}} print $1~9, \
-			"molinerislab.shinyapps.io/shinysea/?rnk=" $10 "&geneset=" $2 "_" $3 "&gseaParam=" {config[GSEA_WEIGHT]}, \
+		| bawk '{{HTTP="http://"; if(length($3)>100){{HTTP=""}} print $1~10, \
+			"molinerislab.shinyapps.io/shinysea/?rnk=" $11 "&geneset=" $2 "_" $3 "&gseaParam=" {config[GSEA_WEIGHT]}, \
 			"www.gsea-msigdb.org/gsea/msigdb/geneset_page.jsp?geneSetName=" $3}}' \
 		| gzip > {output}
 	"""
@@ -218,8 +219,9 @@ rule multi_fGSEA_link:
 	7	NES
 	8	nMoreExtreme
 	9	size
-	10	shinySea_link
-	11	pathway_link
+	10	leadingEdge
+	11	shinySea_link
+	12	pathway_link
 
 """
 
