@@ -69,7 +69,17 @@ In the html and xlsx ouput there are link that point to this app.
 
 SnakeGSEA can be applied on a generic pre-ranked list of genes produced from your custom analysis workflows.
 
-Create the `contrast.rnk` files in the current directory and then run `snakemake -p -j N_CORES all`. 
+Create the tab separated `contrast.rnk` files:
+
+```
+1) gene_id        gene symbol (e.g., SOX1)
+2) ranking_value  the numeric value considered for gene ordering (e.g., logFC)
+```
+
+in the current directory and then run 
+```
+snakemake -p -j N_CORES all
+``` 
 
 You do not have to modify the `config.yaml`. Eventual rnk files from bit_rna_seq pipelines will be ignored.
 
