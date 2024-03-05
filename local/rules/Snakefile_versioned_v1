@@ -1,0 +1,9 @@
+rule all_rnk:
+    input: expand("PC{x}.rnk",x=range(1,21))
+
+rule single_rnk:
+    input: "loadings"
+    output: "PC{x}.rnk"
+    shell:"""
+        awk '{{$1,$({wildcards.x}+1)}}' {input} > {output}
+    """
