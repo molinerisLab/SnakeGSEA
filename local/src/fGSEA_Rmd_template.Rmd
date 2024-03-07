@@ -14,8 +14,8 @@ cat(getwd())
 ## Shared files
 
 ```{r echo=FALSE,results = "asis", cache = FALSE}
-gsea_publish_dir <- gsub("/sto1", "", getwd())
-cat(paste0("http://olilab.unito.it", gsea_publish_dir, "/multi_GSEA.link.header_added.xlsx"))
+#gsea_publish_dir <- gsub("/sto1", "", getwd())
+#cat(paste0("http://olilab.unito.it", gsea_publish_dir, "/multi_GSEA.link.header_added.xlsx"))
 ```
 
 https://molinerislab.shinyapps.io/shinysea/
@@ -27,7 +27,9 @@ https://molinerislab.shinyapps.io/shinysea/
 barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN = 20){
   
   if(nrow(fgseaRes)<topN){
-    stop(paste0("Can not found 20 geneset in multi_GSEA.link.header_added.gz\n\tcontrast: ", unique(fgseaRes$contrast), "\n\tmsigdb: ", unique(fgseaRes$msigdb_type)))
+    message(paste0("Can not found 20 geneset in multi_GSEA.link.header_added.gz\n\tcontrast: ", unique(fgseaRes$contrast), "\n\tmsigdb: ", unique(fgseaRes$msigdb_type)))
+    return(ggplot() + theme_void())
+    #stop(paste0("Can not found 20 geneset in multi_GSEA.link.header_added.gz\n\tcontrast: ", unique(fgseaRes$contrast), "\n\tmsigdb: ", unique(fgseaRes$msigdb_type)))
   }
  
   toplot <- as.data.frame(subset(fgseaRes, select= c("pathway", "msigdb_type", "NES", "pval", "padj")))
@@ -37,6 +39,9 @@ barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN =
   
   if (!is.null(topPathways)) 
     toplot <- subset(toplot, pathway %in% topPathways)
+  
+  # solve problem of NES==0: 3 levels of sign, when plot needs 2
+  toplot <- toplot[which(toplot$NES!=0),]
   
   toplot$direction <- factor(sign(toplot$NES))
   
@@ -66,8 +71,6 @@ barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN =
 ```{r echo = FALSE, results = "asis", cache = FALSE}
 suppressMessages(library(ggplot2))
 suppressMessages(library(dplyr))
-#suppressMessages(suppressWarnings(library(RNAseqRtools)))
-#suppressMessages(library(knitr))
 suppressMessages(library(DT))
 
 infile <- "multi_GSEA.link.header_added.gz"
@@ -113,10 +116,6 @@ lapply(z_list, function(x){
     print(barplot_multi_fGSEA(x_cont))
     cat("\n")
   }
-  #x <- x[order(x$pval),]
-  #DT::datatable(subset(x, select = -c(msigdb_type)))
-  #T::datatable(subset(x, select = -c(msigdb_type)),rownames = F)
-  #print(knitr::kable(subset(x, select = -c(msigdb_type)), row.names = F))
   cat("\n")
 })
 
