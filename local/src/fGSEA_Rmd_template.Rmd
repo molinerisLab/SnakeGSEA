@@ -47,7 +47,7 @@ barplot_multi_fGSEA <- function(fgseaRes, qTh = NULL, topPathways = NULL, topN =
   
   toplot$pathway <- gsub("_", " ", toplot$pathway)
   toplot$pathway <- gsub("GOMF |GOBP |GOCC ", "", toplot$pathway)
-  toplot$pathway <- gsub("KEGG |REACTOME ", "", toplot$pathway)
+  toplot$pathway <- gsub("KEGG |REACTOME |HALLMARK ", "", toplot$pathway)
   
   toplot <- rbind(top_n(toplot, topN/2, NES), top_n(toplot, -(topN/2), NES))
   toplot$pathway <- factor(toplot$pathway, levels = toplot$pathway[order(toplot$NES)])
