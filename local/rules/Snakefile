@@ -33,8 +33,9 @@ GSEA_PUBLISH_HOST=config["GSEA_PUBLISH_HOST"]
 RNK_FILES, = glob_wildcards("{rnk_file}.rnk")
 
 if not RNK_FILES:
-	GLOB = glob_wildcards("../../../{dgetool}.toptable_clean.contrast_{contrast}.gz")
-	RNK_FILES = ["{d}.{c}.{r}".format(d=dge, c=cont, r=config["RNK_METRIC"]) for dge, cont in zip(GLOB.dgetool, GLOB.contrast)]
+    GLOB = glob_wildcards("../../../{dgetool}.toptable_clean.contrast_{contrast}.gz")
+    #RNK_FILES = ["{d}.{c}.{r}".format(d=dge, c=cont, r=config["RNK_METRIC"]) for dge, cont in zip(GLOB.dgetool, GLOB.contrast)]
+    RNK_FILES = ["{d}.{c}.{r}".format(d=dge, c=cont, r=config["RNK_METRIC"]) for dge, cont in zip(GLOB.dgetool, config["CONTRAST_NAMES"])]
 if not RNK_FILES:
 	exit("Files .rnk not found and can not find suitable files in BiT RNAseq pipeline, see https://github.com/molinerisLab/SnakeGSEA/")
 
@@ -47,7 +48,7 @@ rule all:
 	input:
 		"multi_GSEA.link.header_added.gz",
 		"multi_GSEA.link.header_added.xlsx",
-		"multi_GSEA.html"
+#		"multi_GSEA.html"
 #		"gsea_publish_done"
 
 
@@ -83,7 +84,7 @@ rule logFC_rnk:
 	input:
 		"../../../{dgetool}.toptable_clean.contrast_{contrast}.gz"
 	output:
-		"{dgetool}.{contrast}.logFC.rnk"
+		"{dgetool,\w+}.{contrast}.logFC.rnk"
 	shell: """
 		bawk '$Pvalue_adj!="NA" {{print $GeneID, $logFC}}' {input} | sort -k2,2g > {output}
 	"""
@@ -92,10 +93,17 @@ rule logFC_pval_rnk:
 	input:
 		"../../../{dgetool}.toptable_clean.contrast_{contrast}.gz"
 	output:
-		"{dgetool}.{contrast}.logFC_pval.rnk"
+		"{dgetool,\w+}.{contrast}.logFC_pval.rnk"
 	shell: """
 		bawk '$Pvalue_adj!="NA" {{print $GeneID, $logFC*(-log($Pvalue)/log(10))}}' {input} | sort -k2,2g > {output}
 	"""
+"""
+.META: *.toptable_clean*.gz
+	1	GeneID
+	2	logFC
+	3	Pvalue
+	4	Pvalue_adj
+"""
 
 """
 .META: *.rnk
@@ -259,3 +267,52 @@ rule publish:
 		echo {GSEA_PUBLISH_HOST}/$(sed 's|/var/www/html/||' <<<$GSEA_PUBLISH_DIR)/input.html | tee {output}
 	"""
 
+rule leading_edge_genes:
+    input:
+        expand("fGSEA_Results/{dgetool}.{contrast}.logFC_pval.rnk.h.all.gmt.fGSEA.tab", dgetool = config["DGE_TOOL"], contrast = config["CONTRAST_NAMES"])
+    output:
+        "leading_edge/all_contrast.h.{hallmark}.txt"
+    shell:"""
+        mkdir -p `dirname {output}`
+        grep -h "{wildcards.hallmark}" {input} | awk '{{$1=$2=$3=$4=$5=$6=$7=""; sub(/^ */, ""); print}}' \
+        | awk '{{gsub(/, /, "\\n"); print}}' | sort | uniq > {output}
+    """
+
+rule leading_edge_exp:
+    input:
+        genes = "leading_edge/all_contrast.h.{hallmark}.txt",
+        exp = "../../../edger.toptable_clean.ALL_contrast.mark_seqc.exp_in_condition.header_added.gz"
+    output:
+        "leading_edge.logFC.{hallmark}.gz"
+    shell:"""
+        zcat {input.exp} | filter_1col 2 {input.genes} | bawk '{{print $1, $2, $15}}' \
+        | tab2matrix -t | gzip > {output}
+    """
+
+rule all_leading_edge:
+    input:
+        expand("leading_edge.logFC.{hallmark}.xlsx", hallmark = config["HALLMARKS"])
+
+rule merge_leading_edge:
+    output:
+        "leading_edge.logFC.all_hallmarks.xlsx"
+    shell: "echo 'run 'snakemake -n all_leading_edge' and manually merge xlsx files'"
+
+rule signif_only:
+    input:
+        "{file}.gz"
+    output:
+        "{file}.signif.gz"
+    shell:"""
+    bawk 'NR==1 || $padj < 0.05' {input} | gzip > {output}
+    """
+
+rule ALL_h_all:
+    input:
+        "multi_GSEA.link.header_added.gz"
+    output:
+        "h_all_GSEA.link.header_added.gz"
+    shell:"""
+        zcat {input} | awk 'NR==1 || /h.all/' | gzip > {output}
+    """
+        

@@ -62,3 +62,21 @@ GSEA_PUBLISH_HOST: olilab01.ateneo.unito.it
 GSEA_PUBLISH_USER: imolineris
 GSEA_PUBLISH_REPLACE_FROM: \/home
 GSEA_PUBLISH_REPLACE_TO: \/var\/www\/html
+
+
+DGE_TOOL: edger
+CONTRAST_NAMES: 
+  - mutant_vs_wt 
+  - PRPF31_rescue_vs_wt 
+  - SINEUP1_rescue_vs_wt
+  - PRPF31_rescue_vs_mutant
+  - SINEUP1_rescue_vs_mutant
+
+
+#Hallmarks of interest for leading edge expression
+HALLMARKS:
+  - HALLMARK_OXIDATIVE_PHOSPHORYLATION
+  - HALLMARK_INTERFERON_ALPHA_RESPONSE
+  - HALLMARK_INTERFERON_GAMMA_RESPONSE
+  - HALLMARK_HEME_METABOLISM
+  - HALLMARK_INFLAMMATORY_RESPONSE
