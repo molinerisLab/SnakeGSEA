@@ -1,0 +1,20 @@
+name: /home/molinerislab/Pertinent/snakeRnaSeq/dataset/v1/DGE/SnakeGSEA/local/env/conda
+channels:
+  - conda-forge
+  - bioconda
+  - molinerislab
+  - nodefaults
+dependencies:
+  - snakemake=8.27.1
+  - bawk=1.1
+  - ca-certificates=2024.12.14
+  - certifi=2024.12.14
+  - openssl=3.4.0
+  - r-optparse=1.7.5
+  - bioconductor-fgsea=1.32.0
+  - r-dplyr=1.1.4
+  - matrix_reduce=1.1
+  - translate=1.1
+  - r-rmarkdown=2.29
+  - tab2xlsx=1.1
+prefix: /home/molinerislab/Pertinent/snakeRnaSeq/dataset/v1/DGE/SnakeGSEA/local/env/conda
