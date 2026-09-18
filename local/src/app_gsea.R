@@ -13,18 +13,20 @@ parse_args <- function(args) {
     port = 3838L,
     rnk_dir = ".",
     gmt_dir = ".",
-    results = "multi_GSEA.gz"
+    results = "multi_GSEA.gz",
+    gseaParam = 0
   )
   names_map <- c(
     "--host" = "host", "--port" = "port", "--rnk-dir" = "rnk_dir",
-    "--gmt-dir" = "gmt_dir", "--results" = "results"
+    "--gmt-dir" = "gmt_dir", "--results" = "results",
+    "--gseaParam" = "gseaParam"
   )
   i <- 1L
   while (i <= length(args)) {
     key <- args[[i]]
     if (!key %in% names(names_map) || i == length(args)) {
       stop("Usage: app_gsea.R [--host HOST] [--port PORT] [--rnk-dir DIR] ",
-           "[--gmt-dir DIR] [--results FILE]")
+           "[--gmt-dir DIR] [--results FILE] [--gseaParam WEIGHT]")
     }
     values[[names_map[[key]]]] <- args[[i + 1L]]
     i <- i + 2L
@@ -33,22 +35,19 @@ parse_args <- function(args) {
   if (is.na(values$port) || values$port < 1L || values$port > 65535L) {
     stop("--port must be an integer between 1 and 65535")
   }
+  values$gseaParam <- suppressWarnings(as.numeric(values$gseaParam))
+  if (!is.finite(values$gseaParam) || values$gseaParam < 0) {
+    stop("--gseaParam must be a finite non-negative number")
+  }
   values
 }
 
 read_ranking <- function(path) {
-  ranking <- read.delim(path, header = FALSE, stringsAsFactors = FALSE)
-  if (ncol(ranking) < 2L) stop("Ranking must have at least two columns: ", path)
-  ranking <- ranking[, 1:2]
-  names(ranking) <- c("gene", "score")
-  ranking$gene <- trimws(ranking$gene)
-  ranking$score <- suppressWarnings(as.numeric(ranking$score))
-  ranking <- ranking[nzchar(ranking$gene) & is.finite(ranking$score), ]
-  if (!nrow(ranking)) stop("No valid gene scores in: ", path)
-  if (anyDuplicated(ranking$gene)) {
-    stop("Gene identifiers must be unique in: ", path)
-  }
-  sort(setNames(ranking$score, ranking$gene), decreasing = TRUE)
+  # Same ranking preparation as shinySea/server.R; do not filter or collapse genes.
+  ranking <- read.delim(path, header = FALSE, col.names = c("GeneID", "value"))
+  ranking <- ranking[order(ranking$value, decreasing = TRUE), ]
+  ranking$ranking_position <- seq_len(nrow(ranking))
+  ranking
 }
 
 read_gsea_results <- function(path) {
@@ -86,7 +85,10 @@ if (!length(gmt_files)) stop("No .gmt files found in: ", options$gmt_dir)
 
 rankings <- setNames(lapply(rnk_files, read_ranking), normalise_id(rnk_files))
 pathways <- list()
-for (gmt_file in gmt_files) pathways <- c(pathways, fgsea::gmtPathways(gmt_file))
+for (gmt_file in gmt_files) {
+  collection <- sub("\\.gmt$", "", basename(gmt_file))
+  pathways[[collection]] <- fgsea::gmtPathways(gmt_file)
+}
 gsea_table <- read_gsea_results(options$results)
 gsea_table$contrast_id <- normalise_id(gsea_table$contrast)
 available_rankings <- intersect(names(rankings), unique(gsea_table$contrast_id))
@@ -113,9 +115,12 @@ ui <- fluidPage(
     ),
     mainPanel(
       DTOutput("results_table"),
+      helpText("The table above contains pipeline results. The selected pathway below is recalculated as in shinySea."),
       h4(textOutput("selection_title")),
+      tableOutput("fgsea_results"),
       plotOutput("enrichment_plot", height = "380px"),
-      h4("Leading-edge genes"),
+      h4("Gene-set genes and leading-edge membership"),
+      downloadButton("downloadData", "Download leading_edge.tsv"),
       DTOutput("leading_edge_table")
     )
   )
@@ -149,28 +154,57 @@ server <- function(input, output, session) {
     data[selected, , drop = FALSE]
   })
 
-  output$selection_title <- renderText(selected_row()$pathway[[1]])
-
-  output$enrichment_plot <- renderPlot({
+  custom_gsea <- reactive({
     row <- selected_row()
     pathway <- row$pathway[[1]]
-    genes <- pathways[[pathway]]
-    req(length(genes))
-    fgsea::plotEnrichment(genes, rankings[[input$ranking]]) +
-      ggtitle(pathway) + theme_bw(base_size = 13)
+    collection <- pathways[[row$msigdb_type[[1]]]]
+    genes <- collection[[pathway]]
+    validate(need(length(genes) > 0, "Selected pathway is missing from its local GMT collection."))
+    rnk <- rankings[[input$ranking]]
+    rnk_vector <- unlist(rnk$value)
+    names(rnk_vector) <- rnk$GeneID
+    gene_set <- as.data.frame(genes)
+    colnames(gene_set) <- "GeneID"
+
+    # Preserve the original shinySea single-pathway calculation and defaults.
+    fgseaRes <- fgsea::fgseaSimple(
+      pathways = gene_set, stats = rnk_vector, nperm = 1000,
+      minSize = 5, maxSize = 5000, gseaParam = options$gseaParam
+    )
+    validate(need(nrow(fgseaRes) > 0,
+                  "No result: the pathway may be outside shinySea's 5–5000 gene limits."))
+    fgseaRes_tab <- subset(fgseaRes, select = -c(leadingEdge, pathway))
+    fgseaPlot <- fgsea::plotEnrichment(
+      pathway = gene_set[, 1], stats = rnk_vector, gseaParam = options$gseaParam
+    )
+
+    leadingEdge_tab <- as.data.frame(fgseaRes$leadingEdge[[1]])
+    colnames(leadingEdge_tab) <- "Leading_Edge"
+    leadingEdge_tab$hit <- rep("Yes", nrow(leadingEdge_tab))
+    leadingEdge_tab <- merge(gene_set, leadingEdge_tab, all.x = TRUE,
+                            by.y = "Leading_Edge", by.x = "GeneID")
+    leadingEdge_tab[is.na(leadingEdge_tab)] <- "No"
+    leadingEdge_tab <- merge(leadingEdge_tab, rnk)
+    colnames(leadingEdge_tab)[3] <- "ranking_score"
+    leadingEdge_tab <- leadingEdge_tab[order(leadingEdge_tab$ranking_position), ]
+    list(title = gsub("_", " ", paste(row$msigdb_type[[1]], pathway, sep = "_")),
+         plot = fgseaPlot, results = fgseaRes_tab, leading_edge = leadingEdge_tab)
   })
 
+  output$selection_title <- renderText(custom_gsea()$title)
+  output$fgsea_results <- renderTable(custom_gsea()$results, digits = 4)
+  output$enrichment_plot <- renderPlot(plot(custom_gsea()$plot))
   output$leading_edge_table <- renderDT({
-    row <- selected_row()
-    genes <- character()
-    if ("leadingEdge" %in% names(row) && !is.na(row$leadingEdge[[1]])) {
-      genes <- trimws(strsplit(as.character(row$leadingEdge[[1]]), ",")[[1]])
-    }
-    scores <- rankings[[input$ranking]][genes]
-    data <- data.frame(gene = genes, score = unname(scores), stringsAsFactors = FALSE)
-    data <- data[is.finite(data$score), , drop = FALSE]
-    datatable(data, rownames = FALSE, options = list(pageLength = 10))
+    datatable(custom_gsea()$leading_edge, rownames = FALSE,
+              options = list(pageLength = 10, order = list()))
   })
+  output$downloadData <- downloadHandler(
+    filename = function() "leading_edge.tsv",
+    content = function(file) {
+      write.table(custom_gsea()$leading_edge, file, row.names = FALSE,
+                  quote = FALSE, sep = "\t")
+    }
+  )
 }
 
 message("SnakeGSEA local explorer listening on http://", options$host, ":", options$port)

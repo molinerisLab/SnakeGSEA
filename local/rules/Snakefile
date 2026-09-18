@@ -246,16 +246,19 @@ rule multi_fGSEA_link_html:
 
 rule local_shiny:
 	input:
+		app="../../local/src/app_gsea.R",
 		results="multi_GSEA.gz",
 		rankings=expand("{rnk_file}.rnk", rnk_file=RNK_FILES),
 		gene_sets=expand("{gmt}.gmt", gmt=GMT)
 	params:
 		host=config.get("LOCAL_SHINY_HOST", "127.0.0.1"),
-		port=config.get("LOCAL_SHINY_PORT", 3838)
+		port=config.get("LOCAL_SHINY_PORT", 3838),
+		weight=config["GSEA_WEIGHT"]
 	shell:"""
-		Rscript ../../local/src/app_gsea.R \
+		Rscript {input.app:q} \
 			--host {params.host:q} \
 			--port {params.port:q} \
+			--gseaParam {params.weight:q} \
 			--rnk-dir . \
 			--gmt-dir . \
 			--results {input.results:q}
