@@ -244,6 +244,23 @@ rule multi_fGSEA_link_html:
 		Rscript -e 'library(rmarkdown); rmarkdown::render("{input.rmd}", output_file="{output}", quiet=TRUE)'
 	"""
 
+rule local_shiny:
+	input:
+		results="multi_GSEA.gz",
+		rankings=expand("{rnk_file}.rnk", rnk_file=RNK_FILES),
+		gene_sets=expand("{gmt}.gmt", gmt=GMT)
+	params:
+		host=config.get("LOCAL_SHINY_HOST", "127.0.0.1"),
+		port=config.get("LOCAL_SHINY_PORT", 3838)
+	shell:"""
+		Rscript ../../local/src/app_gsea.R \
+			--host {params.host:q} \
+			--port {params.port:q} \
+			--rnk-dir . \
+			--gmt-dir . \
+			--results {input.results:q}
+	"""
+
 rule publish:
 	input:
 		xlsx="multi_GSEA.link.header_added.xlsx",
@@ -258,4 +275,3 @@ rule publish:
 		ssh {GSEA_PUBLISH_USER}@{GSEA_PUBLISH_HOST} ln -sf $GSEA_PUBLISH_DIR/ash_rnk-* /var/www/html/epigen/shinySea/hash; 
 		echo {GSEA_PUBLISH_HOST}/$(sed 's|/var/www/html/||' <<<$GSEA_PUBLISH_DIR)/input.html | tee {output}
 	"""
-
